@@ -30,20 +30,56 @@ export default function Chat() {
             Ask me anything to test the stream.
           </p>
         )}
-        {messages.map((m) => (
-          <div
-            key={m.id}
-            className={`whitespace-pre-wrap rounded-lg px-4 py-2 ${
-              m.role === "user"
-                ? "ml-12 bg-blue-600 text-white"
-                : "mr-12 bg-gray-100 text-gray-900"
-            }`}
-          >
-            {m.parts.map((part, i) =>
-              part.type === "text" ? <span key={i}>{part.text}</span> : null,
-            )}
-          </div>
-        ))}
+        {messages.map((m) => {
+          // Collect web-search source links (Anthropic sends these as source-url parts).
+          const sources = m.parts.filter(
+            (p): p is Extract<typeof p, { type: "source-url" }> =>
+              p.type === "source-url",
+          );
+          // Did the model invoke the web_search tool in this message?
+          const searched = m.parts.some((p) => p.type.startsWith("tool-"));
+
+          return (
+            <div
+              key={m.id}
+              className={`whitespace-pre-wrap rounded-lg px-4 py-2 ${
+                m.role === "user"
+                  ? "ml-12 bg-blue-600 text-white"
+                  : "mr-12 bg-gray-100 text-gray-900"
+              }`}
+            >
+              {searched && m.role !== "user" && (
+                <div className="mb-1 text-xs font-medium text-gray-400">
+                  🔍 searched the web
+                </div>
+              )}
+
+              {m.parts.map((part, i) =>
+                part.type === "text" ? <span key={i}>{part.text}</span> : null,
+              )}
+
+              {sources.length > 0 && (
+                <div className="mt-2 border-t border-gray-200 pt-2 text-xs text-gray-500">
+                  <span className="font-medium">Sources:</span>
+                  <ol className="ml-4 list-decimal">
+                    {sources.map((s, i) => (
+                      <li key={i}>
+                        <a
+                          href={s.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-blue-600 underline"
+                        >
+                          {s.title || s.url}
+                        </a>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       <form onSubmit={handleSubmit} className="flex gap-2 border-t pt-4">
