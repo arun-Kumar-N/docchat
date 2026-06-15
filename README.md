@@ -1,36 +1,38 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# DocChat
 
-## Getting Started
+Chat with your PDFs — cited answers over your own documents.
+*(Week-1 RAG warm-up project on the road to [Tamil-AI portfolio](../tamil-llm-benchmark/SPEC.md).)*
 
-First, run the development server:
+**Stack:** Next.js 16 · Vercel AI SDK v6 · Claude (Anthropic) · Supabase pgvector
+
+## Run it
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.example .env.local   # add your ANTHROPIC_API_KEY
+npm install
+npm run dev                  # → http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Status / build plan
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### ✅ Step 1 — Streaming chat (done, this scaffold)
+- [x] Next.js app + `useChat` UI
+- [x] `/api/chat` streaming route → Claude Sonnet
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### ⬜ Step 2 — PDF → chunks → embeddings
+- [ ] Create a free [Supabase](https://supabase.com) project, run [`supabase/schema.sql`](supabase/schema.sql)
+- [ ] Upload route: parse PDF (`unpdf` or `pdf-parse`), chunk ~500 tokens with ~50 overlap
+- [ ] Embed chunks with [Voyage AI](https://www.voyageai.com) (`voyage-3`, 1024 dims) → insert into `chunks`
 
-## Learn More
+### ⬜ Step 3 — Retrieval + cited answers
+- [ ] `/api/ask`: embed the question → `match_chunks()` top-5 → pass as context to Claude
+- [ ] Prompt Claude to cite chunk numbers; render citations in the UI
 
-To learn more about Next.js, take a look at the following resources:
+### ⬜ Step 4 — Polish + ship
+- [ ] Deploy to Vercel (set env vars in dashboard)
+- [ ] README demo GIF
+- [ ] Short writeup: what I learned about chunking/retrieval
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## What I'm learning here
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Chunking strategy, embedding choice, retrieval quality, streaming UX — the plumbing every RAG system needs. The interesting failures (bad chunk boundaries, irrelevant retrievals) are the point: they're what the Tamil RAG project will have to solve on harder ground.
